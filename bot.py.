@@ -1,0 +1,61 @@
+import os
+import asyncio
+import random
+from pyrogram import Client, filters
+from pyrogram.types import Message
+
+# Load environment variables
+API_ID = int(os.getenv("API_ID"))
+API_HASH = os.getenv("API_HASH")
+BOT_TOKEN = os.getenv("BOT_TOKEN")
+
+# Initialize the bot
+app = Client("phantom_shield", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
+
+# List of blacklisted words (Modify as needed)
+BLACKLISTED_WORDS = ["cp", "videos", "nude", "child abuse"]
+WHITELISTED_WORDS = ["rape"]
+
+# Stealth Mode: Random Group Name & Bio Rotation
+GROUP_NAMES = ["Elite Community 🌟", "Safe Haven 🔥", "Chill Zone 😎"]
+GROUP_BIOS = ["Welcome to the best group!", "Stay safe & have fun!", "No spamming allowed."]
+
+@app.on_message(filters.text & filters.group)
+async def filter_blacklisted_words(client, message: Message):
+    """Deletes entire message if it contains a blacklisted word."""
+    text = message.text.lower()
+    if any(word in text for word in BLACKLISTED_WORDS if word not in WHITELISTED_WORDS):
+        await message.delete()
+
+@app.on_message(filters.text & filters.chat("AbuseNotifications"))
+async def delete_abuse_notifications(client, message: Message):
+    """Deletes messages from @AbuseNotifications."""
+    await message.delete()
+
+@app.on_message(filters.command("stealth") & filters.group)
+async def stealth_mode(client, message: Message):
+    """Randomly changes group name & bio for stealth mode."""
+    group_id = message.chat.id
+    new_name = random.choice(GROUP_NAMES)
+    new_bio = random.choice(GROUP_BIOS)
+    await client.set_chat_title(group_id, new_name)
+    await client.set_chat_description(group_id, new_bio)
+    await message.reply("🔄 Stealth Mode Activated! Group name & bio updated.")
+
+@app.on_message(filters.command("test") & filters.group)
+async def test_command(client, message: Message):
+    """Checks if the bot is active."""
+    await message.reply("✅ PhantomShieldBot is Running Smoothly!")
+
+@app.on_message(filters.command("groupid") & filters.group)
+async def send_group_id(client, message: Message):
+    """Replies with the group ID for debugging."""
+    await message.reply(f"🆔 **Group ID:** `{message.chat.id}`")
+
+def main():
+    """Starts the bot."""
+    print("✅ PhantomShieldBot is running!")
+    app.run()
+
+if __name__ == "__main__":
+    main()
